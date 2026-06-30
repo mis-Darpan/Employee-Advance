@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advance Dashboard — Owner</title>
+  <link rel="stylesheet" href="css/owner.css" />
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">⚡</span>
+        <div>
+          <div class="brand-name">Litpax</div>
+          <div class="brand-sub">Advance Manager</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="showTab('pending')">
+          <span class="nav-icon">🕐</span> Pending Requests
+          <span id="pendingBadge" class="badge hidden">0</span>
+        </button>
+        <button class="nav-item" onclick="showTab('recovery')">
+          <span class="nav-icon">💰</span> Recovery Entry
+        </button>
+        <button class="nav-item" onclick="showTab('balance')">
+          <span class="nav-icon">📊</span> Balance Overview
+        </button>
+        <button class="nav-item" onclick="showTab('history')">
+          <span class="nav-icon">📋</span> All Requests
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-area">
+
+      <header class="top-bar">
+        <div id="pageTitle" class="page-title">Pending Requests</div>
+        <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+      </header>
+
+      <div class="content-body">
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- ======================== TAB: PENDING ======================== -->
+        <div id="tab-pending" class="tab-content active">
+          <div id="pendingList" class="card-list">
+            <div class="loading-msg">Loading...</div>
+          </div>
+        </div>
+
+        <!-- ======================== TAB: RECOVERY ======================== -->
+        <div id="tab-recovery" class="tab-content">
+          <div class="section-card">
+            <h2 class="section-title">Recovery Entry</h2>
+            <p class="section-desc">Sirf woh employees dikhenge jinke paas balance baaki hai.</p>
+
+            <div class="form-group">
+              <label class="form-label">Employee Select Karein <span class="req">*</span></label>
+              <select id="recoveryEmpSelect" class="form-input form-select" onchange="onEmpSelected()">
+                <option value="">-- Employee Select Karein --</option>
+              </select>
+            </div>
+
+            <div id="empBalanceInfo" class="balance-info-box hidden">
+              <div class="bal-row">
+                <span class="bal-label">Total Advance Liya</span>
+                <span id="balTaken" class="bal-val">₹0</span>
+              </div>
+              <div class="bal-row">
+                <span class="bal-label">Total Wapis Kiya</span>
+                <span id="balRecovered" class="bal-val green">₹0</span>
+              </div>
+              <div class="bal-row highlight">
+                <span class="bal-label">Baaki Balance</span>
+                <span id="balDue" class="bal-val red">₹0</span>
+              </div>
+            </div>
+
+            <div id="recoveryForm" class="hidden">
+              <div class="form-group">
+                <label class="form-label">Amount Receive Kiya (₹) <span class="req">*</span></label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">₹</span>
+                  <input type="number" id="recoveryAmount" class="form-input with-prefix" placeholder="0" min="1" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Payment Type <span class="req">*</span></label>
+                <div class="radio-group-h">
+                  <label class="radio-chip">
+                    <input type="radio" name="payType" value="Cash" />
+                    <span>💵 Cash</span>
+                  </label>
+                  <label class="radio-chip">
+                    <input type="radio" name="payType" value="Salary Deduct" />
+                    <span>💼 Salary Deduct</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Remarks (Optional)</label>
+                <input type="text" id="recoveryRemarks" class="form-input" placeholder="Koi note..." />
+              </div>
+
+              <button class="btn-primary" onclick="submitRecovery()">✅ Recovery Darj Karein</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================== TAB: BALANCE ======================== -->
+        <div id="tab-balance" class="tab-content">
+          <div id="balanceTable" class="table-wrap">
+            <div class="loading-msg">Loading...</div>
+          </div>
+        </div>
+
+        <!-- ======================== TAB: HISTORY ======================== -->
+        <div id="tab-history" class="tab-content">
+          <div id="historyTable" class="table-wrap">
+            <div class="loading-msg">Loading...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Approve Modal -->
+  <div id="approveModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Request Approve Karein</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalInfo" class="modal-info-grid"></div>
+
+        <div class="form-group">
+          <label class="form-label">Approved Amount (₹) <span class="req">*</span></label>
+          <div class="input-prefix-wrap">
+            <span class="input-prefix">₹</span>
+            <input type="number" id="approvedAmount" class="form-input with-prefix" placeholder="0" />
+          </div>
+          <div class="field-hint">Partial approve karna ho to kam amount daalo</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Remarks</label>
+          <input type="text" id="approveRemarks" class="form-input" placeholder="Optional..." />
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-danger" onclick="rejectRequest()">❌ Reject</button>
+          <button class="btn-primary" onclick="approveRequest()">✅ Approve</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/owner.js"></script>
+</body>
+</html>
