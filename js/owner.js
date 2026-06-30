@@ -5,8 +5,8 @@
 const GAS_URL = CONFIG.GAS_URL;
 
 let currentRequestId = null;
-let activeAdvances    = [];
-let allRequests       = [];
+let activeAdvances   = [];
+let allRequests      = [];
 
 // =============================================
 // INIT
@@ -66,7 +66,7 @@ async function loadPendingRequests() {
 
     const container = document.getElementById("pendingList");
     if (pending.length === 0) {
-      container.innerHTML = `<div class="empty-state"><span class="empty-icon">✅</span>Koi pending request nahi hai.</div>`;
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">✅</span>No pending requests.</div>`;
       return;
     }
 
@@ -127,7 +127,7 @@ async function approveRequest() {
   const amount  = parseFloat(document.getElementById("approvedAmount").value);
   const remarks = document.getElementById("approveRemarks").value.trim();
 
-  if (!amount || amount <= 0) { showToast("Amount daalo", "error"); return; }
+  if (!amount || amount <= 0) { showToast("Enter amount to approve.", "error"); return; }
 
   try {
     const res  = await fetch(GAS_URL, {
@@ -142,20 +142,20 @@ async function approveRequest() {
     });
     const data = await res.json();
     if (data.success) {
-      showToast(`✅ ${data.status}! ₹${fmtNum(amount)} approve ho gaya.`, "success");
+      showToast(`✅ ${data.status}! ₹${fmtNum(amount)} approved.`, "success");
       closeModal();
       loadAll();
     } else {
       showToast("Error: " + data.error, "error");
     }
   } catch (err) {
-    showToast("Server error.", "error");
+    showToast("Server error. Try again.", "error");
   }
 }
 
 async function rejectRequest() {
   const remarks = document.getElementById("approveRemarks").value.trim();
-  if (!confirm("Reject karna chahte hain?")) return;
+  if (!confirm("Reject this request?")) return;
 
   try {
     const res  = await fetch(GAS_URL, {
@@ -169,12 +169,12 @@ async function rejectRequest() {
     });
     const data = await res.json();
     if (data.success) {
-      showToast("❌ Request reject ho gayi.", "error");
+      showToast("❌ Request rejected.", "error");
       closeModal();
       loadAll();
     }
   } catch (err) {
-    showToast("Server error.", "error");
+    showToast("Server error. Try again.", "error");
   }
 }
 
@@ -189,30 +189,39 @@ async function loadActiveAdvances() {
 
     activeAdvances = data.data;
     const select = document.getElementById("recoveryEmpSelect");
-    select.innerHTML = `<option value="">-- Employee Select Karein --</option>`;
+    select.innerHTML = `<option value="">-- Select Employee --</option>`;
     activeAdvances.forEach(emp => {
-      select.innerHTML += `<option value="${emp.empId}">${emp.empName} — ₹${fmtNum(emp.balanceDue)} baaki</option>`;
+      select.innerHTML += `<option value="${emp.empId}">${emp.empName} — ₹${fmtNum(emp.balanceDue)} pending</option>`;
     });
 
     if (activeAdvances.length === 0) {
-      select.innerHTML = `<option value="">✅ Koi pending balance nahi</option>`;
+      select.innerHTML = `<option value="">✅ No pending balance</option>`;
     }
   } catch (err) {}
 }
 
 function onEmpSelected() {
-  const empId = document.getElementById("recoveryEmpSelect").value;
+  const empId   = document.getElementById("recoveryEmpSelect").value;
   const infoBox = document.getElementById("empBalanceInfo");
-  const form = document.getElementById("recoveryForm");
-  if (!empId) { infoBox.classList.add("hidden"); form.classList.add("hidden"); return; }
+  const form    = document.getElementById("recoveryForm");
+
+  if (!empId) {
+    infoBox.classList.add("hidden");
+    form.classList.add("hidden");
+    return;
+  }
+
   const emp = activeAdvances.find(e => String(e.empId).trim() === String(empId).trim());
-  if (!emp) { console.warn('not found', empId); return; }
-  document.getElementById("balTaken").textContent = "₹" + fmtNum(emp.totalTaken);
+  if (!emp) return;
+
+  document.getElementById("balTaken").textContent     = "₹" + fmtNum(emp.totalTaken);
   document.getElementById("balRecovered").textContent = "₹" + fmtNum(emp.totalRecovered);
-  document.getElementById("balDue").textContent = "₹" + fmtNum(emp.balanceDue);
+  document.getElementById("balDue").textContent       = "₹" + fmtNum(emp.balanceDue);
+
   document.getElementById("recoveryAmount").value = "";
   document.getElementById("recoveryRemarks").value = "";
   document.querySelectorAll('input[name="payType"]').forEach(r => r.checked = false);
+
   infoBox.classList.remove("hidden");
   form.classList.remove("hidden");
 }
@@ -223,13 +232,15 @@ async function submitRecovery() {
   const payType = document.querySelector('input[name="payType"]:checked');
   const remarks = document.getElementById("recoveryRemarks").value.trim();
 
-  if (!empId)         { showToast("Employee select karein.", "error"); return; }
-  if (!amount || amount <= 0) { showToast("Amount daalo.", "error"); return; }
-  if (!payType)       { showToast("Payment type select karein.", "error"); return; }
+  if (!empId)              { showToast("Please select an employee.", "error"); return; }
+  if (!amount || amount <= 0) { showToast("Please enter a valid amount.", "error"); return; }
+  if (!payType)            { showToast("Please select payment type.", "error"); return; }
 
-  const emp = activeAdvances.find(e => e.empId === empId);
-  if (amount > emp.balanceDue) {
-    showToast(`Amount zyada hai! Max: ₹${fmtNum(emp.balanceDue)}`, "error");
+  const emp = activeAdvances.find(e => String(e.empId).trim() === String(empId).trim());
+  if (!emp) { showToast("Employee not found.", "error"); return; }
+
+  if (amount > parseFloat(emp.balanceDue)) {
+    showToast(`Amount exceeds balance! Max: ₹${fmtNum(emp.balanceDue)}`, "error");
     return;
   }
 
@@ -239,29 +250,29 @@ async function submitRecovery() {
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({
         action: "addRecovery",
-        empId, amount,
+        empId:       String(empId),
+        amount:      amount,
         paymentType: payType.value,
-        remarks
+        remarks:     remarks
       })
     });
     const data = await res.json();
 
     if (data.success) {
       if (data.cleared) {
-        showToast(`🎉 ₹${fmtNum(amount)} darj! Balance NIL ho gaya — ${emp.empName} dropdown se hat gaya.`, "success");
+        showToast(`🎉 ₹${fmtNum(amount)} recorded! Balance cleared — ${emp.empName} removed from list.`, "success");
       } else {
-        showToast(`✅ ₹${fmtNum(amount)} darj! Baaki balance: ₹${fmtNum(data.balanceDue)}`, "success");
+        showToast(`✅ ₹${fmtNum(amount)} recorded! Remaining balance: ₹${fmtNum(data.balanceDue)}`, "success");
       }
-      // Reset form
       document.getElementById("recoveryEmpSelect").value = "";
       document.getElementById("empBalanceInfo").classList.add("hidden");
       document.getElementById("recoveryForm").classList.add("hidden");
       loadAll();
     } else {
-      showToast("Error: " + data.error, "error");
+      showToast("Error: " + (data.error || "Something went wrong."), "error");
     }
   } catch (err) {
-    showToast("Server error.", "error");
+    showToast("Server error. Try again.", "error");
   }
 }
 
@@ -278,7 +289,7 @@ async function loadBalance() {
     const container = document.getElementById("balanceTable");
 
     if (rows.length === 0) {
-      container.innerHTML = `<div class="loading-msg">Koi data nahi.</div>`;
+      container.innerHTML = `<div class="loading-msg">No data found.</div>`;
       return;
     }
 
@@ -287,7 +298,7 @@ async function loadBalance() {
         <thead>
           <tr>
             <th>Emp ID</th><th>Name</th><th>Department</th>
-            <th>Total Liya</th><th>Wapis Kiya</th><th>Baaki Balance</th><th>Last Updated</th>
+            <th>Total Advance</th><th>Total Recovered</th><th>Balance Due</th><th>Last Updated</th>
           </tr>
         </thead>
         <tbody>
@@ -323,7 +334,7 @@ async function loadAllRequests() {
     const container = document.getElementById("historyTable");
 
     if (rows.length === 0) {
-      container.innerHTML = `<div class="loading-msg">Koi request nahi.</div>`;
+      container.innerHTML = `<div class="loading-msg">No requests found.</div>`;
       return;
     }
 
@@ -383,7 +394,6 @@ function showToast(msg, type = "") {
   setTimeout(() => t.classList.add("hidden"), 4000);
 }
 
-// Close modal on overlay click
 document.getElementById("approveModal").addEventListener("click", function(e) {
   if (e.target === this) closeModal();
 });
