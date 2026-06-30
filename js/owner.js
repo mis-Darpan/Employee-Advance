@@ -203,25 +203,16 @@ async function loadActiveAdvances() {
 function onEmpSelected() {
   const empId = document.getElementById("recoveryEmpSelect").value;
   const infoBox = document.getElementById("empBalanceInfo");
-  const form    = document.getElementById("recoveryForm");
-
-  if (!empId) {
-    infoBox.classList.add("hidden");
-    form.classList.add("hidden");
-    return;
-  }
-
-  const emp = activeAdvances.find(e => e.empId === empId);
-  if (!emp) return;
-
-  document.getElementById("balTaken").textContent     = "₹" + fmtNum(emp.totalTaken);
+  const form = document.getElementById("recoveryForm");
+  if (!empId) { infoBox.classList.add("hidden"); form.classList.add("hidden"); return; }
+  const emp = activeAdvances.find(e => String(e.empId).trim() === String(empId).trim());
+  if (!emp) { console.warn('not found', empId); return; }
+  document.getElementById("balTaken").textContent = "₹" + fmtNum(emp.totalTaken);
   document.getElementById("balRecovered").textContent = "₹" + fmtNum(emp.totalRecovered);
-  document.getElementById("balDue").textContent       = "₹" + fmtNum(emp.balanceDue);
-
+  document.getElementById("balDue").textContent = "₹" + fmtNum(emp.balanceDue);
   document.getElementById("recoveryAmount").value = "";
   document.getElementById("recoveryRemarks").value = "";
   document.querySelectorAll('input[name="payType"]').forEach(r => r.checked = false);
-
   infoBox.classList.remove("hidden");
   form.classList.remove("hidden");
 }
