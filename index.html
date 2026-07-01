@@ -43,17 +43,20 @@
         </div>
 
         <div id="formContainer">
-          <div class="form-group">
-            <label class="form-label" for="empName">Full Name <span class="req">*</span></label>
-            <input type="text" id="empName" class="form-input" placeholder="Enter full name" />
-          </div>
-
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="empId">Employee ID <span class="req">*</span></label>
-              <input type="text" id="empId" class="form-input" placeholder="e.g. LTX-001" />
+              <input type="text" id="empId" class="form-input" placeholder="Enter your ID" />
             </div>
             <div class="form-group">
+              <label class="form-label" for="empName">Full Name <span class="req">*</span></label>
+              <input type="text" id="empName" class="form-input" placeholder="Auto-filled from ID" />
+              <span id="empNameHint" class="field-hint"></span>
+            </div>
+          </div>
+
+          
+          <div class="form-group">
               <label class="form-label" for="dept">Department <span class="req">*</span></label>
               <select id="dept" class="form-input form-select">
                 <option value="">-- Select --</option>
@@ -66,7 +69,6 @@
                 <option>Other</option>
               </select>
             </div>
-          </div>
 
           <div class="form-group">
             <label class="form-label" for="amount">Advance Amount (₹) <span class="req">*</span></label>
