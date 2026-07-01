@@ -4,6 +4,60 @@
 
 const GAS_URL = CONFIG.GAS_URL;
 
+let empLookupTimer = null;
+
+// Auto-fill name when Employee ID is typed
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("empId").addEventListener("input", function() {
+    clearTimeout(empLookupTimer);
+    const empId = this.value.trim();
+
+    if (!empId) {
+      setNameField("", false);
+      return;
+    }
+
+    empLookupTimer = setTimeout(() => fetchEmployee(empId), 600);
+  });
+});
+
+async function fetchEmployee(empId) {
+  try {
+    const res  = await fetch(GAS_URL + "?action=getEmployee&empId=" + encodeURIComponent(empId));
+    const data = await res.json();
+
+    if (data.success) {
+      setNameField(data.empName, true);
+    } else {
+      setNameField("", false);
+    }
+  } catch (err) {
+    // silent fail
+  }
+}
+
+function setNameField(name, found) {
+  const nameInput = document.getElementById("empName");
+  nameInput.value = name;
+
+  const hint = document.getElementById("empNameHint");
+  if (!hint) return;
+
+  if (found) {
+    hint.textContent = "✅ Employee found";
+    hint.className = "field-hint success";
+    nameInput.readOnly = true;
+    nameInput.style.background = "#f0fdf4";
+    nameInput.style.color = "#166534";
+  } else {
+    hint.textContent = "";
+    hint.className = "field-hint";
+    nameInput.readOnly = false;
+    nameInput.style.background = "";
+    nameInput.style.color = "";
+  }
+}
+
 async function submitForm() {
   const empName   = document.getElementById("empName").value.trim();
   const empId     = document.getElementById("empId").value.trim();
@@ -12,7 +66,6 @@ async function submitForm() {
   const reason    = document.getElementById("reason").value.trim();
   const repayType = document.querySelector('input[name="repayType"]:checked');
 
-  // Validation — empId and reason are optional
   if (!empName || !empId || !dept || !amount || !repayType) {
     showError("Please fill all required fields.");
     return;
