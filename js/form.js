@@ -13,7 +13,7 @@ async function submitForm() {
   const repayType = document.querySelector('input[name="repayType"]:checked');
 
   // Validation — empId and reason are optional
-  if (!empName || !dept || !amount || !repayType) {
+  if (!empName || !empId || !dept || !amount || !repayType) {
     showError("Please fill all required fields.");
     return;
   }
