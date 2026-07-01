@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadAll() {
   const selectedEmp = document.getElementById("recoveryEmpSelect")?.value || "";
   await Promise.all([
+    loadDashboard(),
     loadPendingRequests(),
     loadActiveAdvances(),
     loadBalance(),
@@ -34,10 +35,11 @@ async function loadAll() {
 // TAB SWITCHING
 // =============================================
 const TAB_TITLES = {
-  pending:  "Pending Requests",
-  recovery: "Recovery Entry",
-  balance:  "Balance Overview",
-  history:  "All Requests"
+  dashboard: "Dashboard",
+  pending:   "Pending Requests",
+  recovery:  "Recovery Entry",
+  balance:   "Balance Overview",
+  history:   "All Requests"
 };
 
 function showTab(name) {
@@ -45,9 +47,35 @@ function showTab(name) {
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.getElementById("tab-" + name).classList.add("active");
   document.querySelectorAll(".nav-item")[
-    ["pending","recovery","balance","history"].indexOf(name)
+    ["dashboard","pending","recovery","balance","history"].indexOf(name)
   ].classList.add("active");
   document.getElementById("pageTitle").textContent = TAB_TITLES[name];
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+async function loadDashboard() {
+  try {
+    const res  = await fetch(GAS_URL + "?action=getBalance");
+    const data = await res.json();
+    if (!data.success) return;
+
+    const rows = data.data;
+    let totalGiven     = 0;
+    let totalRecovered = 0;
+    let totalPending   = 0;
+
+    rows.forEach(r => {
+      totalGiven     += parseFloat(r.totalTaken)     || 0;
+      totalRecovered += parseFloat(r.totalRecovered) || 0;
+      totalPending   += parseFloat(r.balanceDue)     || 0;
+    });
+
+    document.getElementById("dashTotalGiven").textContent     = "₹" + fmtNum(totalGiven);
+    document.getElementById("dashTotalRecovered").textContent = "₹" + fmtNum(totalRecovered);
+    document.getElementById("dashTotalPending").textContent   = "₹" + fmtNum(totalPending);
+  } catch (err) {}
 }
 
 // =============================================
