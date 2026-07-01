@@ -21,6 +21,9 @@
       </div>
 
       <nav class="sidebar-nav">
+        <button class="nav-item" onclick="showTab('dashboard')">
+          <span class="nav-icon">📈</span> Dashboard
+        </button>
         <button class="nav-item active" onclick="showTab('pending')">
           <span class="nav-icon">🕐</span> Pending Requests
           <span id="pendingBadge" class="badge hidden">0</span>
@@ -49,6 +52,27 @@
 
         <!-- Toast -->
         <div id="toast" class="toast hidden"></div>
+
+        <!-- ======================== TAB: DASHBOARD ======================== -->
+        <div id="tab-dashboard" class="tab-content">
+          <div class="dashboard-cards">
+            <div class="dash-card indigo">
+              <div class="dash-icon">💰</div>
+              <div class="dash-label">Total Advance Given</div>
+              <div class="dash-value" id="dashTotalGiven">—</div>
+            </div>
+            <div class="dash-card green">
+              <div class="dash-icon">✅</div>
+              <div class="dash-label">Total Recovered</div>
+              <div class="dash-value" id="dashTotalRecovered">—</div>
+            </div>
+            <div class="dash-card red">
+              <div class="dash-icon">⏳</div>
+              <div class="dash-label">Total Pending</div>
+              <div class="dash-value" id="dashTotalPending">—</div>
+            </div>
+          </div>
+        </div>
 
         <!-- ======================== TAB: PENDING ======================== -->
         <div id="tab-pending" class="tab-content active">
